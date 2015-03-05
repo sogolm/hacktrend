@@ -1,66 +1,52 @@
 
 from HackerNewsUnofficial import getPostsForDate
 
-dates = ["20150101",
-         "20150102",
-         "20150103",
-         "20150104",
-         "20150105",
-         "20150106",
-         "20150107",
-         "20150108",
-         "20150109",
-         "20150110",
-         "20150111",
-         "20150112",
-         "20150113",
-         "20150114",
-         "20150115",
-         "20150116",
-         "20150117",
-         "20150118",
-         "20150119",
-         "20150120",
-         "20150121",
-         "20150122",
-         "20150123",
-         "20150124",
-         "20150125",
-         "20150126",
-         "20150127",
-         "20150128",
-         "20150129",
-         "20150130",
-         "20150131",
-         "20150201",
-         "20150202",
-         "20150203",
-         "20150204",
-         "20150205",
-         "20150206",
-         "20150207",
-         "20150208",
-         "20150209",
-         "20150210",
-         "20150211",
-         "20150212",
-         "20150213",
-         "20150214",
-         "20150215",
-         "20150216",
-         "20150217",
-         "20150218",
-         "20150219",
-         "20150220",
-         "20150221",
-         "20150222",
-         "20150223",
-         "20150224",
-         "20150225"]
+
+def dateGenerator():
+   '''Returns a list of dates in the format yyyymmdd from '2014122' up to '20141231'.'''
+
+   lst = []
+   day = 24
+   month = 12
+   year = 2014
+
+   while year < 2015:
+      while month < 13:
+         while day <= 31:
+            today = ''
+            if day < 10 and month < 10:
+               today += str(year)+'0'+str(month)+'0'+str(day)
+            if day < 10 and month >= 10:
+               today += str(year)+str(month)+'0'+str(day)
+            if day >= 10 and month < 10:
+               today += str(year)+'0'+str(month)+str(day)
+            if day >= 10 and month >= 10:
+               today += str(year)+str(month)+str(day)
+            lst.append(today)
+            day += 1
+            if month == 2 and day == 29 and year != 2012:
+               day = 1
+               break
+            if month == 2 and day == 30 and year == 2012:
+               day = 1
+               break
+            if month in [4, 6, 9, 11] and day == 31:
+               day = 1
+               break
+         day = 1
+         month += 1
+         if month == 13:
+            month = 1
+            break
+      moth = 1
+      day = 1
+      year += 1
+   return lst
+
+
 
 if __name__ == "__main__":
-    #http://hckrnews.com/data/20150226.js
+    dates = dateGenerator()
     for date in dates:
         print "Retrieving date: {date}".format(date=date)
         getPostsForDate(date)
-    pass

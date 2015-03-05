@@ -12,7 +12,7 @@ def getPostsForDate(date):
 
     # Retrieve the set of posts for the given date from the API.
     url = "http://hckrnews.com/data/{date}.js".format(date=date)
-    res = requests.get(url, timeout=5)
+    res = requests.get(url, timeout=2)
     assert isinstance(res, requests.Response)
     if res.status_code is not 200:
         return []
@@ -24,7 +24,7 @@ def getPostsForDate(date):
 
     # Resolve the linked content for each of the posts.
     urls = map(lambda json: json["link"], jsonPosts)
-    reqs = (grequests.get(u, verify=False, timeout=5) for u in urls)
+    reqs = (grequests.get(u, verify=False, timeout=) for u in urls)
     resps = grequests.map(reqs)
     assert (len(urls) == len(resps))
 
@@ -52,6 +52,7 @@ def setPostLinkedContent(response, post):
 
     try:
         utf8PostContent = unicode(response.content, "utf-8")
+        soup = BeautifulSoup(utf8PostContent)
     except:
         utf8PostContent = 'error'
     if utf8PostContent is not 'error':
@@ -67,7 +68,7 @@ def setPostLinkedContent(response, post):
 
 def grequest_get(url):
     return grequests.get(url)
-    
+
 
 def getContentForUrl(url):
     """Gets the associated content to the link for testing purposes"""
