@@ -1,0 +1,38 @@
+CREATE TABLE bag AS
+SELECT url_id, url, date, word_id, COUNT(1) as cnt
+FROM wordloc_sub
+JOIN urls_sub
+ON urls_sub.id=wordloc_sub.url_id
+JOIN words_sub
+ON words_sub.id=wordloc_sub.word_id
+GROUP BY wordloc_sub.url_id, wordloc_sub.word_id, urls_sub.url, date
+ORDER BY date;
+
+CREATE MATERIALIZED VIEW max AS
+SELECT url_id, MAX(cnt) 
+FROM bag GROUP BY url_id ORDER BY url_id;
+
+CREATE MATERIALIZED VIEW tf_inter AS
+SELECT b.url_id, b.word_id, b.cnt, m.max
+FROM bag AS b
+JOIN max AS m
+ON b.url_id = m.url_id
+ORDER BY b.url_id;
+
+CREATE VIEW tfreq AS
+SELECT url_id, word_id, 
+0.5 + ((0.5) * t.cnt / (t.max)) AS tf
+FROM tf_inter AS t
+ORDER BY url_id, word_id;
+
+CREATE VIEW idf AS
+SELECT word_id, LOG(1010./count(url_id)) AS idf_score
+FROM wordloc_sub 
+GROUP BY word_id ORDER BY word_id;
+
+CREATE TABLE tfidf AS
+SELECT tfreq.url_id AS url_id, tfreq.word_id AS word_id,
+(tfreq.tf * idf.idf_score) AS tfidf
+FROM tfreq JOIN idf 
+ON tfreq.word_id=idf.word_id
+ORDER BY url_id, tfreq;
