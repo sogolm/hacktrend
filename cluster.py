@@ -11,10 +11,10 @@ def create_feature_matrix(c):
 	This feature matrix is fed into the kmeans 
 	to cluster the documents.
 	"""
-	c.execute('''SELECT COUNT(*) FROM urls_sub;''')
+	c.execute('''SELECT COUNT(*) FROM urls;''')
 	url_count = int(c.fetchone()[0])
 
-	c.execute('''SELECT COUNT(*) FROM words_sub''')
+	c.execute('''SELECT COUNT(*) FROM words;''')
 	word_count = int(c.fetchone()[0])
 
 	# instantiate a sparse matrix of size (url_count X word_count)
@@ -22,9 +22,11 @@ def create_feature_matrix(c):
 
 	for i in xrange(url_count):
 		c.execute(
-		'''SELECT * FROM tfidf 
+		'''SELECT * FROM tfidf
 		WHERE url_id=(%d);
 		'''	%(i))
+		if i%10000 == 0:
+			print "Loading url: %d"%(i)
 
 		doc = c.fetchall()
 		for row in enumerate(doc):
@@ -39,12 +41,10 @@ def cluster(feature_matrix, c):
 	Creates a postgres table to keep track of the documents
 	labels.
 	"""
-	#TODO: change the cluster numbers once the full data is in. 
-	kmeans = KMeans(n_clusters=6)
+	#TODO: change the cluster number once the full data is in. 
+	kmeans = KMeans(n_clusters=15)
 	kmeans.fit(feature_matrix)
 	centers = kmeans.cluster_centers_
-	print centers.shape
-	#top_centroids = kmeans.cluster_centers_.argsort(:, -1:-11:-1)
 	sort_args = np.argsort(centers)[:, -1:-11:-1]
 	for i, row in enumerate(sort_args):
 		print "topic %d: " %i
@@ -58,6 +58,7 @@ def cluster(feature_matrix, c):
 
 	# Create a table of url_id and cluster num
 
+	c.execute('''DROP TABLE IF EXISTS url_label_sub;''')
 	c.execute(''' CREATE TABLE url_label_sub (
 				  label  INTEGER,
 				  url_id INTEGER);''')
@@ -72,10 +73,10 @@ def cluster(feature_matrix, c):
 	print "Populated table url_label_sub"
 
 if __name__ == '__main__':
-	conn = psycopg2.connect(dbname='articles', user='sogolmoshtaghi', host='localhost')
+	conn = psycopg2.connect(dbname='articles', user='postgres', password='', host='localhost')
 	c = conn.cursor()
 	feature_matrix = create_feature_matrix(c)
-	cluster(feature_matrix, c)
-	conn.commit()
+	# cluster(feature_matrix, c)
+	# conn.commit()
 	c.close()
 	conn.close()
