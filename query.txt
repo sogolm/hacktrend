@@ -1,12 +1,12 @@
 CREATE TABLE bag AS
-SELECT url_id, url, date, word_id, COUNT(1) as cnt
-FROM wordloc_sub
-JOIN urls_sub
-ON urls_sub.id=wordloc_sub.url_id
-JOIN words_sub
-ON words_sub.id=wordloc_sub.word_id
-GROUP BY wordloc_sub.url_id, wordloc_sub.word_id, urls_sub.url, date
-ORDER BY date;
+SELECT url_id, url, date, words.id AS word_id, COUNT(1) as cnt
+FROM wordloc
+JOIN urls
+ON urls.id=wordloc.url_id
+JOIN words
+ON words.id=wordloc.word_id
+GROUP BY wordloc.url_id, words.id, urls.url, date
+ORDER BY date
 
 CREATE MATERIALIZED VIEW max AS
 SELECT url_id, MAX(cnt) 
@@ -25,10 +25,18 @@ SELECT url_id, word_id,
 FROM tf_inter AS t
 ORDER BY url_id, word_id;
 
+# count the number of docs each word appears in
+CREATE VIEW word_url_cnt AS
+SELECT word_id, COUNT(url_id) AS url_count
+FROM bag GROUP BY word_id ORDER BY word_id
+
 CREATE VIEW idf AS
-SELECT word_id, LOG(1010./count(url_id)) AS idf_score
-FROM wordloc_sub 
-GROUP BY word_id ORDER BY word_id;
+SELECT bag.word_id, 
+LOG(1010./COUNT(wu.url_count)) AS idf_score
+FROM bag
+JOIN word_url_cnt as wu
+ON bag.word_id=wu.word_id
+GROUP BY bag.word_id ORDER BY bag.word_id;
 
 CREATE TABLE tfidf AS
 SELECT tfreq.url_id AS url_id, tfreq.word_id AS word_id,
@@ -36,3 +44,12 @@ SELECT tfreq.url_id AS url_id, tfreq.word_id AS word_id,
 FROM tfreq JOIN idf 
 ON tfreq.word_id=idf.word_id
 ORDER BY url_id, tfreq;
+
+# FOR DELETING STUFF FROM WORDS AND WORDLOC
+# deleted 321 rows from wordsub and need to delete the same rows from wordloc
+CREATE TABLE del AS
+select * from wordloc_sub where word_id not in (select id from words_sub);
+
+delete from wordloc_sub where id in (select id from del);
+
+
