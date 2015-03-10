@@ -1,7 +1,8 @@
 import psycopg2
 import numpy as np 
 from sklearn.cluster import KMeans 
-from scipy.sparse import csc_matrix
+from scipy.sparse import lil_matrix
+from sklearn.externals import joblib
 
 
 def create_feature_matrix(c):
@@ -18,20 +19,13 @@ def create_feature_matrix(c):
 	word_count = int(c.fetchone()[0])
 
 	# instantiate a sparse matrix of size (url_count X word_count)
-	mat = csc_matrix((url_count, word_count), dtype=np.int8)
+	mat = lil_matrix((url_count, word_count), dtype=np.float_)
 
-	for i in xrange(url_count):
-		c.execute(
-		'''SELECT * FROM tfidf
-		WHERE url_id=(%d);
-		'''	%(i))
-		if i%10000 == 0:
-			print "Loading url: %d"%(i)
+	c.execute('''SELECT * FROM tfidf;''')
+	doc = c.fetchall()
 
-		doc = c.fetchall()
-		for row in enumerate(doc):
-			# row is a tuple representing (url_id, word_id, tfidf)
-			mat[i, row[1][1]] = row[1][2]
+	for row in doc:
+		mat[row[0], row[1]] = row[2]
 
 	return mat
 
@@ -71,12 +65,16 @@ def cluster(feature_matrix, c):
 		c.execute("INSERT INTO url_label_sub VALUES (%d, %d);" % (label, i))
 
 	print "Populated table url_label_sub"
+	return kmeans
 
 if __name__ == '__main__':
 	conn = psycopg2.connect(dbname='articles', user='postgres', password='', host='localhost')
 	c = conn.cursor()
 	feature_matrix = create_feature_matrix(c)
-	# cluster(feature_matrix, c)
+	joblib.dump(feature_matrix, 'featurematrix.pkl')
+	print len(feature_matrix)
+	# kmeans = cluster(feature_matrix, c)
+	# joblib.dump(kmeans, 'kmeans.pkl')
 	# conn.commit()
 	c.close()
 	conn.close()
