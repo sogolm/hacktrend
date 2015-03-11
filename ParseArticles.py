@@ -5,7 +5,7 @@ import time
 import Tokenize
 
 
-class build_TF_IDF():
+class transform_data():
 
     def __init__(self, client, database, table):
         self.client = client
@@ -100,10 +100,8 @@ class build_TF_IDF():
                         else:
                             print "Long word:", word
                     urlid += 1
+
         self.conn.commit()
-
-        #self.create_indices()
-
         print "num words: ", len(worddict)
         print "num_urls: ", urlid
         self.cur.close()
@@ -112,7 +110,6 @@ class build_TF_IDF():
 
 if __name__ == '__main__':
     client = MongoClient()
-    # TODO: currently using the test db. change it to the main mongodb.
-    builder = build_TF_IDF(client, 'test', 'hackerfulldata')
-    builder.data_pipeline()
+    transformer = transform_data(client, 'test', 'hackerfulldata')
+    transformer.data_pipeline()
 

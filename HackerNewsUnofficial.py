@@ -8,7 +8,6 @@ import re
 
 def getPostsForDate(date):
     """Returns a set of Posts for a YYYYMMDD date, using the hckernews.com API."""
-    assert isinstance(date, str)
 
     # Retrieve the set of posts for the given date from the API.
     url = "http://hckrnews.com/data/{date}.js".format(date=date)
@@ -20,14 +19,12 @@ def getPostsForDate(date):
     # Retrieve the JSON list of posts out of the response.
     jsonPosts = res.json()
     assert isinstance(jsonPosts, list)
-    jsonPosts = filter(WhiteList.verifyPostJson, jsonPosts)
+    jsonPosts = filter(FilterPosts.verifyPostJson, jsonPosts)
 
     # Resolve the linked content for each of the posts.
     urls = map(lambda json: json["link"], jsonPosts)
     reqs = (grequests.get(u, verify=False, timeout=) for u in urls)
     resps = grequests.map(reqs)
-    assert (len(urls) == len(resps))
-
     map(lambda pair: setPostLinkedContent(pair[0], pair[1]), zip(resps, jsonPosts))
 
     conn = MongoClient()
@@ -37,19 +34,15 @@ def getPostsForDate(date):
     return coll
 
 
-
 def setPostLinkedContent(response, post):
     """Extracts and associates the linked content with the post."""
+
     if response is None:
         return
-
-    assert isinstance(response, requests.Response)
-    assert isinstance(post, dict)
 
     # For unsuccessful responses, do nothing.
     post[u'status_code'] = response.status_code
         
-
     try:
         utf8PostContent = unicode(response.content, "utf-8")
         soup = BeautifulSoup(utf8PostContent)
@@ -72,6 +65,7 @@ def grequest_get(url):
 
 def getContentForUrl(url):
     """Gets the associated content to the link for testing purposes"""
+
     url_content = {}
     res = requests.get(url)
     if res.status_code is not 200:
@@ -83,11 +77,9 @@ def getContentForUrl(url):
     url_content[link] = utf8PostText
 
 
-class WhiteList:
+class FilterPosts:
     @staticmethod
     def verifyPostJson(json):
-        assert isinstance(json, dict)
-
         # Ignore posts with no score.
         if not u"points" in json or json[u"points"] is None or json[u"points"] is 0:
             return False
