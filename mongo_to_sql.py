@@ -5,7 +5,7 @@ import time
 import Tokenize
 
 
-class transform_data():
+class transfer_data():
 
     def __init__(self, client, database, table):
         self.client = client
@@ -108,8 +108,10 @@ class transform_data():
         self.conn.close()
 
 
-if __name__ == '__main__':
+def main():
     client = MongoClient()
-    transformer = transform_data(client, 'test', 'hackerfulldata')
+    transformer = transfer_data(client, 'test', 'hackerfulldata')
     transformer.data_pipeline()
 
+
+    
