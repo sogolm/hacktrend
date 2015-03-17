@@ -50,18 +50,15 @@ class transfer_data():
             print err_msg
             self.conn.rollback()
 
-    def create_indices(self):
-        self.cur.execute('''CREATE INDEX words_word ON words(word);''')
-        self.cur.execute('''CREATE INDEX wordloc_wordid ON wordloc(word_id);''')
-        self.cur.execute('''CREATE INDEX wordloc_urlid ON wordloc(url_id);''')
 
     def convert_time(self, epoch_date):
         return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch_date))
 
     def data_pipeline(self):
         """
-        Runs the hackernews corpus through cleaning, tokenization
-        and TF_IDF
+        For each post in mongodb, cleans and tokenizes the content and
+        inserts into data into pre-created postgres tables words, wordloc
+        and urls.
         """
         arts_with_content = self.table.find({'status_code': 200}, timeout=False)
 
@@ -69,6 +66,7 @@ class transfer_data():
         worddict = {}
         urlid = 0
         for art_i, article in enumerate(arts_with_content):
+            # Commit to database after every 2000 posts 
             if art_i == 0 or art_i == 1 or art_i % 2000 == 0:
                 self.conn.commit()
             if len(article['link_content']) > 30:
@@ -86,7 +84,6 @@ class transfer_data():
 
                         # Only insert if the word is less than 100 characters.
                         if len(word) < 100:
-                            word = word.replace("'", "''")
                             if word not in worddict:
                                 wordid = len(worddict)
                                 worddict[word] = wordid
@@ -102,8 +99,6 @@ class transfer_data():
                     urlid += 1
 
         self.conn.commit()
-        print "num words: ", len(worddict)
-        print "num_urls: ", urlid
         self.cur.close()
         self.conn.close()
 
@@ -111,7 +106,4 @@ class transfer_data():
 def main():
     client = MongoClient()
     transformer = transfer_data(client, 'test', 'hackerfulldata')
-    transformer.data_pipeline()
-
-
-    
+    transformer.data_pipeline()  

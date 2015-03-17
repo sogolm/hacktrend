@@ -4,6 +4,7 @@ import mongo_to_sql
 def create_inital_tables(conn, cur):
     """
     Creates sql tables for search and trend purposes.
+    Tables: words, urls, wordloc.
     """
 
     cur.execute('''DROP TABLE IF EXISTS urls;''')
@@ -35,6 +36,10 @@ def create_inital_tables(conn, cur):
     print 'Successfully created tables in potsgres'
 
 def create_indices(con, cur):
+  '''
+  Creates indices for tables words (on word) 
+  and wordloc (on word_id & url_id)
+  '''
     cur.execute('''CREATE INDEX word_id ON words(word);''')
     cur.execute('''CREATE INDEX wordloc_word_id ON wordloc(word_id);''')
     cur.execute('''CREATE INDEX wordloc_url_id ON wordloc(url_id);''')
@@ -43,7 +48,8 @@ def create_indices(con, cur):
 
 def create_other_tables(conn, cur):
     """
-    Creates a bag of words, term frequency and tfidf table based on tables
+    Creates a bag of words, term frequency, tfidf 
+    and trend table based on tables
     words, wordloc and urls
     """
     cur.execute('''DROP TABLE IF EXISTS bag;''')

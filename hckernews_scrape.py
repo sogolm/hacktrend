@@ -7,7 +7,7 @@ import re
 
 
 def getPostsForDate(date):
-    """Returns a set of Posts for a YYYYMMDD date, using the hckernews.com API."""
+    """Returns a set of Posts for a YYYYMMDD date, using the hckernews.com/data API."""
 
     # Retrieve the set of posts for the given date from the API.
     url = "http://hckrnews.com/data/{date}.js".format(date=date)
@@ -64,7 +64,7 @@ def grequest_get(url):
 
 
 def getContentForUrl(url):
-    """Gets the associated content to the link for testing purposes"""
+    """Gets the associated content to the link for testing purposes."""
 
     url_content = {}
     res = requests.get(url)
@@ -80,6 +80,7 @@ def getContentForUrl(url):
 class FilterPosts:
     @staticmethod
     def verifyPostJson(json):
+        """ Verifies that the post is not a pdf type and that it has points."""
         # Ignore posts with no score.
         if not u"points" in json or json[u"points"] is None or json[u"points"] is 0:
             return False
