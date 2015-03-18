@@ -15,8 +15,8 @@ from pprint import pprint
 
 def to_datetime(date_string):
     '''
-    Converts date strings with 
-    format YYYY-MM to datetime object 
+    Converts date strings with
+    format YYYY-MM to datetime object
     '''
     return datetime.datetime.strptime(date_string, '%Y-%m')
 
@@ -56,7 +56,7 @@ def get_change_points(data):
 def get_top_articles_for_months(term, months):
     '''
     For the critical months, queries for the top 10 urls
-    that contain the term ordered by TFIDF. 
+    that contain the term ordered by TFIDF.
     '''
     # Convert the term to lowercase, strip whitespace
     #and use only the first word in multi-word queries
@@ -71,7 +71,13 @@ def get_top_articles_for_months(term, months):
     results = {}
     for month in months:
         date_range_start = to_epoch_date(month)
-        date_range_end = to_epoch_date(datetime.datetime(month.year, month.month+1, month.day))
+    if(month.month + 1) % 12 == 1:
+        print "Entered if"
+        year = month.year + 1
+        print "new year: ", year
+        date_range_end = to_epoch_date(datetime.datetime(year, (month.month+1)%12, month.day))
+    else:
+            date_range_end = to_epoch_date(datetime.datetime(month.year, (month.month+1)%12, month.day))
         cur.execute("""SELECT * FROM trends
             WHERE word_id=%d AND article_date > %d AND article_date < %d
             ORDER BY article_tfidf DESC LIMIT 10"""
@@ -113,4 +119,3 @@ def plot_query_term(term, content):
 
 if __name__ == '__main__':
     plot()
-
